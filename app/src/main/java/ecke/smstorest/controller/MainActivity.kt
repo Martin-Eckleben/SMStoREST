@@ -14,11 +14,21 @@ import kotlinx.android.synthetic.main.activity_main.statusText
 import kotlinx.android.synthetic.main.activity_main.imageView
 
 import ecke.smstorest.model.Config
+import android.content.Intent
+import ecke.smstorest.service.ContinuityService
+
 
 class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
+
+        // if configs are set -> fill input fields
+        Config.read(this)
+        Config.endpoint?.let {
+            endpoint_input.setText(Config.endpoint)
+        }
+        checkConfigComplete()
 
         ActivityCompat.requestPermissions(
             this,
@@ -29,10 +39,11 @@ class MainActivity : AppCompatActivity() {
             ),
             1
         )
+
+        startService(Intent(this, ContinuityService::class.java))
     }
 
     fun saveSettings(view: View) {
-
         val sharedPref = getSharedPreferences("config", Context.MODE_PRIVATE) ?: return
         with(sharedPref.edit()) {
             putString("endpoint", endpoint_input.text.toString())
@@ -46,6 +57,10 @@ class MainActivity : AppCompatActivity() {
             Toast.LENGTH_SHORT
         ).show()
 
+        checkConfigComplete()
+    }
+
+    private fun checkConfigComplete(){
         Config.read(this)
         if(!Config.configComplete()){
             statusText.text = "complete config"
